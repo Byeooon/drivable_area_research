@@ -2,7 +2,9 @@ import io
 import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
+from sympy import flatten
 import torch
+import torch.nn.functional as F
 import os
 import sys
 from numpy.linalg import norm
@@ -12,7 +14,6 @@ from tqdm import tqdm
 import time
 import pydensecrf.densecrf as dcrf
 from pydensecrf.utils import unary_from_labels
-
 from transformers import AutoImageProcessor, AutoModel
 
 os.environ["XFORMERS_DISABLED"] = "1" # Switch to enable xFormers
@@ -24,10 +25,16 @@ print('학습을 진행하는 기기:',device)
 dinov2_vitg14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitg14')
 dinov2_vitg14.eval().to(device)
 
+def makedirs(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+    # else:
+    #     raise Exception('Already folder exists')
+
 def roi(model_input, box_size):
-    visualize = torch.permute(model_input[0], (1,2,0)).detach().numpy()
+    visualize = torch.permute(model_input[0], (1,2,0)).detach().cpu().numpy()
     tmp_img = visualize.copy()
-    width_offset = 16
+    width_offset = 7
 
     # 이미지 자르기
     flatten_indices = []
@@ -37,7 +44,7 @@ def roi(model_input, box_size):
             upper = i * grid_size
             right = left + grid_size
             lower = upper + grid_size
-            if (box_size-9<=i<=box_size-1)&(box_size-width_offset-1>=j>=width_offset):
+            if (box_size-4<=i<=box_size-1)&(box_size-width_offset-1>=j>=width_offset):
                 flatten_indices.append(i*box_size+j)
                 tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
                 
@@ -106,7 +113,7 @@ def getScores(conf_matrix):
         iou = IU[1]
         F_score = 2*(recall*pre)/(recall+pre)
     return globalacc, pre, recall, F_score, iou
-
+'''
 def fine_drivable(img, model_output, flatten_indices, width, height, output_size):
     mean = np.mean(model_output[flatten_indices], axis=0)
     cosine_sim = np.dot(model_output, mean) / (norm(model_output)*norm(mean))
@@ -123,55 +130,75 @@ def fine_drivable(img, model_output, flatten_indices, width, height, output_size
     crf_drivable_map = crf(img, resized, (width, height))
     
     return crf_drivable_map
+'''
+def fine_drivable(img, model_output, flatten_indices, width, height, output_size):
+    mean = torch.mean(model_output[flatten_indices], dim=0)
+    cosine_sim = F.cosine_similarity(model_output, mean.unsqueeze(0), dim=1)
+    norm_cosine = cosine_sim / torch.max(cosine_sim)
     
+    threshold_norm_cosine = norm_cosine.clone()
+    threshold_norm_cosine[threshold_norm_cosine < threshold] = 0
+    threshold_norm_cosine[threshold_norm_cosine >= threshold] = 1
+    drivable_map = threshold_norm_cosine.reshape((output_size, output_size))
+    drivable_map_np = drivable_map.detach().cpu().numpy()
+    resized = cv2.resize(drivable_map_np, (width, height), interpolation=cv2.INTER_NEAREST)
+
+    crf_drivable_map = crf(img, resized, (width, height))
+    
+    return crf_drivable_map
 
 img_size = 280 # 644
-threshold = 0.6
+threshold = 0.5
 grid_size = 14
-num_labels = 2
+num_labels = 2 # Drivable / Non-drivable
 num_iter = 2
 def main():
     processor = AutoImageProcessor.from_pretrained('facebook/dinov2-giant', crop_size={'height':img_size, 'width':img_size}, size={'height':img_size, 'width':img_size})
     base_path = '/media/imlab/HDD/ORFD'
     folders = ['training', 'testing', 'validation']
-    folder_idx = 0
-    img_path = os.path.join(base_path, f'{folders[folder_idx]}/image_data/')
-    gt_path = os.path.join(base_path, f'{folders[folder_idx]}/gt_image/')
-    
-    img_list = [file for file in os.listdir(img_path) if file.endswith('.png')]
+    # folder_idx = 0
     
     conf_mat = np.zeros((num_labels, num_labels), dtype=np.float64)
-    for i in tqdm(img_list):
-        img_name = i
-        img = Image.open(f'{img_path}{img_name}')
-        img_np = np.array(img)
-        oriHeight, oriWidth, _ = img_np.shape
+    for folder_idx in range(len(folders)):
+        img_path = os.path.join(base_path, f'{folders[folder_idx]}/image_data')
+        gt_path = os.path.join(base_path, f'{folders[folder_idx]}/gt_image')
         
-        inputs = processor(images=img_np, return_tensors="pt")
-        output_size = int(inputs.pixel_values[0].shape[1]/grid_size)
-        box_size = img_size // grid_size  # num of grid per row and column
+        save_path = os.path.join(base_path, f'{folders[folder_idx]}/pseudo_labeling')
+        makedirs(save_path)
         
-        model_input = torch.tensor(inputs.pixel_values).to(device)
-        # model_input = inputs.pixel_values
-        model_output = dinov2_vitg14.get_intermediate_layers(model_input)[0][0]#.detach().numpy()
+        img_list = [file for file in os.listdir(img_path) if file.endswith('.png')]
+        with torch.no_grad():
+            for i in tqdm(img_list):
+                img_name = i
+                img = Image.open(os.path.join(img_path, f'{img_name}'))
+                img_np = np.array(img)
+                oriHeight, oriWidth, _ = img_np.shape
+                
+                inputs = processor(images=img_np, return_tensors="pt")
+                output_size = int(inputs.pixel_values[0].shape[1]/grid_size)
+                box_size = img_size // grid_size  # num of grid per row and column
+                
+                model_input = inputs.pixel_values.to(device)
+                # model_input = inputs.pixel_values
+                model_output = dinov2_vitg14.get_intermediate_layers(model_input)[0][0]#.cpu().numpy()
 
-        for j in tqdm(range(num_iter)):
-            if j==0:
-                flatten_indices = roi(model_input, box_size)
-                crf_drivable_map = fine_drivable(img, model_output, flatten_indices, img_size, img_size, output_size)
-            else:
-                flatten_indices1 = find_drivable_indices(box_size, crf_drivable_map)
-                crf_drivable_map1 = fine_drivable(img, model_output, flatten_indices1, oriWidth, oriHeight, output_size)
-        
-        useDir = os.path.join(base_path, folders[folder_idx])
-        label_img_name = img_name.split('.')[0]+"_fillcolor.png"
-        label_dir = os.path.join(useDir, 'gt_image', label_img_name)
-        label_image = cv2.cvtColor(cv2.imread(label_dir), cv2.COLOR_BGR2RGB)
-        # resized_label_image = cv2.resize(label_image, (img_size, img_size), interpolation=cv2.INTER_NEAREST)
-        label = np.zeros((oriHeight, oriWidth), dtype=np.uint8)
-        label[label_image[:,:,2] > 200] = 1
-        
-        conf_mat += confusion_matrix(np.int_(label), np.int_(crf_drivable_map1), num_labels)
+                for j in tqdm(range(num_iter)):
+                    if j==0:
+                        flatten_indices = roi(model_input, box_size)
+                        crf_drivable_map = fine_drivable(img, model_output, flatten_indices, img_size, img_size, output_size)
+                    else:
+                        flatten_indices1 = find_drivable_indices(box_size, crf_drivable_map)
+                        crf_drivable_map1 = fine_drivable(img, model_output, flatten_indices1, oriWidth, oriHeight, output_size)
+                cv2.imwrite(os.path.join(save_path, f'{img_name}'), crf_drivable_map1*255)
+                
+                label_img_name = img_name.split('.')[0]+"_fillcolor.png"
+                label_dir = os.path.join(gt_path, label_img_name)
+                label_image = cv2.cvtColor(cv2.imread(label_dir), cv2.COLOR_BGR2RGB)
+                # resized_label_image = cv2.resize(label_image, (img_size, img_size), interpolation=cv2.INTER_NEAREST)
+                label = np.zeros((oriHeight, oriWidth), dtype=np.uint8)
+                label[label_image[:,:,2] > 200] = 1
+                
+                conf_mat += confusion_matrix(np.int_(label), np.int_(crf_drivable_map1), num_labels)
 
     globalacc, pre, recall, F_score, iou = getScores(conf_mat)
     print ('glob acc : {0:.3f}, pre : {1:.3f}, recall : {2:.3f}, F_score : {3:.3f}, IoU : {4:.3f}'.format(globalacc, pre, recall, F_score, iou))
