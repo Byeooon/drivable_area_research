@@ -1,5 +1,5 @@
 from dataload import get_dataloaders
-from visualize import visualize_data
+from drivable_area_research.visualize import visualize_data
 
 def main():
     base_dir = '.'  # 현재 디렉토리
