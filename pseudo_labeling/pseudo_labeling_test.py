@@ -49,7 +49,7 @@ def main():
         depth_path = os.path.join(base_path, f'{folder}/dense_depth')
         gt_path = os.path.join(base_path, f'{folder}/gt_image')
         
-        save_path = os.path.join(base_path, f'{folder}/pseudo_labeling_depth')
+        save_path = os.path.join(base_path, f'{folder}/pseudo_labeling_raw_depth_x10')
         
         img_list = [file for file in os.listdir(img_path) if file.endswith('.png')]
 
