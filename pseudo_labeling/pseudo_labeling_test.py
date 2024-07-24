@@ -37,19 +37,13 @@ def getScores(conf_matrix):
     return globalacc, pre, recall, F_score, iou
 
 def main():
-    base_path = '/media/imlab/HDD/ORFD'
-    folders = ['training', 'testing', 'validation']
-    folders = ['testing']
-    num_labels=2
-    # folder_idx = 0
-    
     conf_mat = np.zeros((num_labels, num_labels), dtype=np.float64)
     for folder in folders:
         img_path = os.path.join(base_path, f'{folder}/image_data')
         depth_path = os.path.join(base_path, f'{folder}/dense_depth')
         gt_path = os.path.join(base_path, f'{folder}/gt_image')
         
-        save_path = os.path.join(base_path, f'{folder}/pseudo_labeling_raw_depth_x10')
+        save_path = os.path.join(base_path, f'{folder}/{save_folder_name}')
         
         img_list = [file for file in os.listdir(img_path) if file.endswith('.png')]
 
@@ -70,4 +64,11 @@ def main():
     print ('glob acc : {0:.3f}, pre : {1:.3f}, recall : {2:.3f}, F_score : {3:.3f}, IoU : {4:.3f}'.format(globalacc, pre, recall, F_score, iou))
     
 if __name__ == "__main__":
+    base_path = '/media/imlab/HDD/ORFD'
+    folders = ['training', 'testing', 'validation']
+    folders = ['testing']
+    num_labels=2
+    
+    save_folder_name = 'tmp'# 'pseudo_labeling_raw_depth'
+    
     main()

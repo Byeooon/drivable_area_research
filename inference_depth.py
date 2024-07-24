@@ -9,27 +9,13 @@ import cv2
 import numpy as np
 import torch
 
-from Depth_Anything_V2.depth_anything_v2.dpt import DepthAnythingV2
-
-os.environ["XFORMERS_DISABLED"] = "1" # Switch to enable xFormers
-USE_CUDA = torch.cuda.is_available()
-print(USE_CUDA)
-device = torch.device('cuda:0' if USE_CUDA else 'cpu')
-if device=="cuda": torch.cuda.empty_cache()
-print('학습을 진행하는 기기:',device)
-
-model_configs = {
-        'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
-        'vitb': {'encoder': 'vitb', 'features': 128, 'out_channels': [96, 192, 384, 768]},
-        'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]},
-        'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
-    }
+from Depth_Anything_V2.metric_depth.depth_anything_v2.dpt import DepthAnythingV2
 
 def makedirs(path):
     if not os.path.exists(path):
         os.makedirs(path)
-    # else:
-    #     raise Exception('Already folder exists')
+    else:
+        raise Exception('Already folder exists')
 
 def main():
     for folder in folders:
@@ -44,21 +30,36 @@ def main():
             image = cv2.imread(os.path.join(img_path, f'{img_name}'))
             
             depth = model.infer_image(image) # HxW raw depth map in numpy
-
-            output = depth # prediction.squeeze().cpu().numpy()
             
-            # cv2.imwrite(os.path.join(save_path, f'{img_name}'), output)
+            cv2.imwrite(os.path.join(save_path, f'{img_name}'), depth)
             
-            np.save(os.path.join(save_path, i.split('.')[0]), output)
+            # np.save(os.path.join(save_path, i.split('.')[0]), output)
             
 if __name__=='__main__':
+    os.environ["XFORMERS_DISABLED"] = "1" # Switch to enable xFormers
+    USE_CUDA = torch.cuda.is_available()
+    print(USE_CUDA)
+    device = torch.device('cuda:0' if USE_CUDA else 'cpu')
+    if device=="cuda": torch.cuda.empty_cache()
+    print('학습을 진행하는 기기:',device)
+
+    model_configs = {
+            'vits': {'encoder': 'vits', 'features': 64, 'out_channels': [48, 96, 192, 384]},
+            'vitb': {'encoder': 'vitb', 'features': 128, 'out_channels': [96, 192, 384, 768]},
+            'vitl': {'encoder': 'vitl', 'features': 256, 'out_channels': [256, 512, 1024, 1024]},
+            'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
+        }
+    
     base_path = '/media/imlab/HDD/gurka'
     folders = ['0']
-    save_folder_name = 'dense_depth_npy'
+    save_folder_name = 'dense_depth'
+    
     encoder = 'vitl' # or 'vits', 'vitb', 'vitg'
-
-    model = DepthAnythingV2(**model_configs[encoder])
-    model.load_state_dict(torch.load(f'./Depth_Anything_V2/checkpoints/depth_anything_v2_{encoder}.pth', map_location='cpu'))
+    dataset = 'vkitti' # 'hypersim' for indoor model, 'vkitti' for outdoor model
+    max_depth = 80 # 20 for indoor model, 80 for outdoor model
+    
+    model = DepthAnythingV2(**{**model_configs[encoder], 'max_depth': max_depth})
+    model.load_state_dict(torch.load(f'Depth_Anything_V2/metric_depth/checkpoints/depth_anything_v2_metric_{dataset}_{encoder}.pth', map_location='cpu'))
     model = model.to(device).eval()
     
     main()

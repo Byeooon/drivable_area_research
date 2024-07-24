@@ -12,15 +12,15 @@ def makedirs(path):
     # else:
     #     raise Exception('Already folder exists')
 
-base_path = '/media/imlab/HDD/gurka'
-folders = ['0']
+base_path = '/media/imlab/HDD/orfd'
+folders = ['training']
 
 video_name = "video.mp4"
 alpha = 0.6
 fps = 10
 
 for folder in folders:
-    img_path = os.path.join(base_path, f'{folder}/image')
+    img_path = os.path.join(base_path, f'{folder}/image_data')
     label_path = os.path.join(base_path, f'{folder}/pseudo_labeling')
 
     save_path = os.path.join(base_path, f'{folder}/png_to_video')
