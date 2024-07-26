@@ -20,8 +20,8 @@ from transformers import AutoImageProcessor, AutoModel
 def makedirs(path):
     if not os.path.exists(path):
         os.makedirs(path)
-    # else:
-    #     raise Exception('Already folder exists')
+    else:
+        raise Exception('Already folder exists')
 
 def roi(model_input, box_size, dataset):
     visualize = torch.permute(model_input[0], (1,2,0)).detach().cpu().numpy()
@@ -169,15 +169,14 @@ def main():
         img_list = [file for file in os.listdir(img_path) if file.endswith('.png')]
         with torch.no_grad():
             for i in tqdm(img_list):
-                if i!='rgb 4.png':
-                    continue
+                # if i!='016544.png':
+                #     continue
                 
                 img_name = i
                 img = Image.open(os.path.join(img_path, f'{img_name}')).convert('RGB')
                 img_np = np.array(img)
                 oriHeight, oriWidth, _ = img_np.shape
                 
-                '''
                 depth = cv2.imread(os.path.join(depth_path, f'{img_name}'), cv2.IMREAD_GRAYSCALE)
                 # depth = np.load(os.path.join(depth_path, img_name.split('.')[0]+'.npy'))
                 depth = cv2.resize(depth, (box_size, box_size), interpolation=cv2.INTER_NEAREST)
@@ -185,8 +184,6 @@ def main():
                 depth_np = depth_np # (depth_np - np.min(depth_np)) / (np.max(depth_np) - np.min(depth_np))
                 # depth = depth.astype(np.float32)
                 depth_np = np.expand_dims(depth_np, axis=0)
-                '''
-                depth_np = None
                 
                 inputs = processor(images=img_np, return_tensors="pt")
                 output_size = int(inputs.pixel_values[0].shape[1]/grid_size)
@@ -206,9 +203,6 @@ def main():
                     else:
                         flatten_indices1 = find_drivable_indices(box_size, crf_drivable_map)
                         crf_drivable_map1 = fine_drivable(img, depth_np, model_output, flatten_indices1, oriHeight, oriWidth, (output_size, output_size), j)
-                        plt.imshow(crf_drivable_map1, cmap='gray')
-                        plt.savefig('tmp.png')
-                        sys.exit()
 
                 cv2.imwrite(filename=os.path.join(save_path, f'{img_name}'), img=(crf_drivable_map1*255))
                 
@@ -237,14 +231,14 @@ if __name__ == "__main__":
     dinov2_vitg14.eval().to(device)
     
     img_size = 644 # 644
-    threshold = 0.5 # 0.5
+    threshold = 0.6 # 0.5
     grid_size = 14
     box_size = img_size // grid_size  # num of grid per row and column
     num_labels = 2 # Drivable / Non-drivable
     num_iter = 2
     
     dataset = 'gurka' # orfd
-    base_path = f'/media/imlab/HDD/{dataset}'
+    base_path = f'/home/julio981007/HDD/{dataset}'
     folders = ['training', 'testing', 'validation']
     folders = ['0']
     # folders = ['training', 'validation']

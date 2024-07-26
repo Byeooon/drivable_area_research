@@ -27,6 +27,13 @@ class DrivableLearner():
         self.writer = SummaryWriter('runs/fashion_trainer_{}'.format(self.timestamp))
         
     def train(self):
+        model = torch.load('/home/julio981007/drivable_area_research/checkpoints/dinov2_seg_head/dinov2_vitg14_ade20k_linear_head.pth')
+        print("Model's state_dict:")
+        print(model['state_dict'])
+        for param_tensor in model.state_dict():
+            print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+        sys.exit()
+        
         model = DrivableNet(device=device)
         
         train_loader, val_loader = get_train_dataloaders('/media/imlab/HDD/ORFD/', batch_size=self.args.batch_size)

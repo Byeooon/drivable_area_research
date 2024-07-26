@@ -1,5 +1,4 @@
 import os
-from regex import I
 from transformers import AutoImageProcessor, AutoModelForDepthEstimation
 from PIL import Image
 from tqdm import tqdm
@@ -50,7 +49,7 @@ if __name__=='__main__':
             'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
         }
     
-    base_path = '/media/imlab/HDD/gurka'
+    base_path = '/home/julio981007/HDD/gurka'
     folders = ['0']
     save_folder_name = 'dense_depth'
     
@@ -59,7 +58,7 @@ if __name__=='__main__':
     max_depth = 80 # 20 for indoor model, 80 for outdoor model
     
     model = DepthAnythingV2(**{**model_configs[encoder], 'max_depth': max_depth})
-    model.load_state_dict(torch.load(f'Depth_Anything_V2/metric_depth/checkpoints/depth_anything_v2_metric_{dataset}_{encoder}.pth', map_location='cpu'))
+    model.load_state_dict(torch.load(f'./Depth_Anything_V2/metric_depth/checkpoints/depth_anything_v2_metric_{dataset}_{encoder}.pth', map_location='cpu'))
     model = model.to(device).eval()
     
     main()
