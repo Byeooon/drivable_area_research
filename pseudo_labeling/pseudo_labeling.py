@@ -42,9 +42,9 @@ def roi(model_input, box_size, dataset):
                     tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
     
     elif dataset=='gurka':
-        top_width_offset = 3
-        left_side_width_offset = 10
-        right_side_width_offset = 12
+        top_width_offset = 2
+        left_side_width_offset = 13 # 10
+        right_side_width_offset = 10 # 12
 
         flatten_indices = []
         for i in range(box_size):
@@ -53,15 +53,18 @@ def roi(model_input, box_size, dataset):
                 upper = i * grid_size
                 right = left + grid_size
                 lower = upper + grid_size
-                if (box_size-23<=i<=box_size-22)&(box_size//2-top_width_offset<=j<=box_size//2+top_width_offset):
+                if (box_size-22<=i<=box_size-21)&(box_size//2-top_width_offset<=j<=box_size//2+top_width_offset): # 24, 23
                     flatten_indices.append(i*box_size+j)
                     tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
-                if (box_size-10<=i<=box_size-0)&(box_size//2-left_side_width_offset-1<=j<=box_size//2-left_side_width_offset):
+                if (box_size-6<=i<=box_size-2)&(box_size//2-left_side_width_offset-1<=j<=box_size//2-left_side_width_offset): # 8, 4
                     flatten_indices.append(i*box_size+j)
                     tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
-                if (box_size-10<=i<=box_size-0)&(box_size//2+right_side_width_offset<=j<=box_size//2+right_side_width_offset+1):
+                if (box_size-6<=i<=box_size-2)&(box_size//2+right_side_width_offset<=j<=box_size//2+right_side_width_offset+1): # 8, 4
                     flatten_indices.append(i*box_size+j)
                     tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
+        # plt.imshow(tmp_img)
+        # plt.show()
+        # sys.exit()
     
     return flatten_indices
 
@@ -164,28 +167,27 @@ def main():
         gt_path = os.path.join(base_path, f'{folder}/gt_image')
         
         save_path = os.path.join(base_path, f'{folder}/{save_folder_name}')
+        print('\nsave path :', save_path)
         makedirs(save_path)
         
         img_list = [file for file in os.listdir(img_path) if file.endswith('.png')]
         with torch.no_grad():
             for i in tqdm(img_list):
-                # if i!='016544.png':
+                # if i!='000450.png':
                 #     continue
-                
                 img_name = i
                 img = Image.open(os.path.join(img_path, f'{img_name}')).convert('RGB')
                 img_np = np.array(img)
                 oriHeight, oriWidth, _ = img_np.shape
                 
-                depth = cv2.imread(os.path.join(depth_path, f'{img_name}'), cv2.IMREAD_GRAYSCALE)
-                # depth = np.load(os.path.join(depth_path, img_name.split('.')[0]+'.npy'))
-                depth = cv2.resize(depth, (box_size, box_size), interpolation=cv2.INTER_NEAREST)
-                depth_np = np.array(depth)
-                depth_np = depth_np # (depth_np - np.min(depth_np)) / (np.max(depth_np) - np.min(depth_np))
-                # depth = depth.astype(np.float32)
-                depth_np = np.expand_dims(depth_np, axis=0)
+                # depth = cv2.imread(os.path.join(depth_path, f'{img_name}'), cv2.IMREAD_GRAYSCALE)
+                # depth = cv2.resize(depth, (box_size, box_size), interpolation=cv2.INTER_NEAREST)
+                # depth_np = np.array(depth)
+                # depth_np = depth_np # (depth_np - np.min(depth_np)) / (np.max(depth_np) - np.min(depth_np))
+                # depth_np = np.expand_dims(depth_np, axis=0)
+                depth_np = None
                 
-                inputs = processor(images=img_np, return_tensors="pt")
+                inputs = processor(images=img_np, return_tensors="pt", do_normalize=False)
                 output_size = int(inputs.pixel_values[0].shape[1]/grid_size)
                 
                 model_input = inputs.pixel_values.to(device)
@@ -240,9 +242,9 @@ if __name__ == "__main__":
     dataset = 'gurka' # orfd
     base_path = f'/home/julio981007/HDD/{dataset}'
     folders = ['training', 'testing', 'validation']
-    folders = ['0']
+    folders = ['3']
     # folders = ['training', 'validation']
     
-    save_folder_name = 'pseudo_labeling_raw_depth'# 'pseudo_labeling_raw_depth'
+    save_folder_name = 'pseudo_labeling'# 'pseudo_labeling_raw_depth'
     
     main()

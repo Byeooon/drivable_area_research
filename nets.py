@@ -86,21 +86,29 @@ class SegHead(nn.Module):
         return output
         
 class DrivableNet(nn.Module):
-    def __init__(self, device):
+    def __init__(self, depth, device):
         super().__init__()
+        self.depth = depth
         
         self.img_model = ImgEncoder().to(device=device)
         self.depth_model = DepthEncoder(in_channels=1, output_channels=256).to(device=device)
-        self.seg_head = SegHead(in_channels=1792, output_channels=1).to(device=device)
+        
+        num_channels = 1792 if self.depth else 1536
+        
+        self.seg_head = SegHead(in_channels=num_channels, output_channels=1).to(device=device)
         
         self.flatten = nn.Flatten(start_dim=2, end_dim=-1)
         
     def forward(self, img, depth):
         x = self.img_model(img)
-        y = self.depth_model(depth)
-        y = self.flatten(y)
+        concat = x
         
-        concat = torch.concat((x, y), dim=-1)
+        if self.depth:
+            y = self.depth_model(depth)
+            y = self.flatten(y)
+            
+            concat = torch.concat((x, y), dim=-1)
+        
         concat = concat.permute(0, 2, 1)
         concat = concat.view(img.shape[0], -1, 16, 16)
         

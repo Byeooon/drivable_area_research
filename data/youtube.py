@@ -30,9 +30,8 @@ def main():
             yt_stream = yt.streams
         except:
             print('Connection Error')
-        
         # 모든 파일 mp4 저장으로 설정
-        mp4files = yt_stream.filter(file_extension='mp4', res = res)
+        mp4files = yt_stream.filter(file_extension=format, res = res, video_codec=codec)
         if len(mp4files)==0:
             raise Exception('Not found video')
         
@@ -50,6 +49,9 @@ def main():
 if __name__ == '__main__':
     SAVE_PATH = '/home/julio981007/HDD/gurka' # 경로 설정 
     link= open('/home/julio981007/drivable_area_research/data/youtube.txt', 'r') # 다운로드할 유튜브 링크 리스트에 담기
+    
+    format = 'mp4'
     res = '720p'
+    codec = 'avc1.640020' # 'avc1.4d4020'
     
     main()
