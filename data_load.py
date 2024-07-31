@@ -114,7 +114,11 @@ class DrivableAreaDataset(Dataset):
             lidar_tensor = torch.from_numpy(lidar_data).float()
 
         # Ground Truth 이미지 로드
-        gt_image = Image.open(gt_path).convert('L') # 그레이스케일로 변환
+        gt_image = cv2.imread(gt_path)
+        gt_image = cv2.cvtColor(gt_image, cv2.COLOR_BGR2RGB)
+        gt_image = cv2.cvtColor(gt_image, cv2.COLOR_BGR2GRAY)
+        gt_image = np.array(gt_image)
+        gt_image[gt_image<255] = 0
         gt_tensor = transforms.ToTensor()(gt_image)
 
         return image, depth, lidar_tensor, gt_tensor

@@ -32,7 +32,7 @@ def main():
                 success, image = vidcap.read()
                 frame_count += 1
                 pbar.update(1)  # 진행 바 업데이트
-            print("Finished! Converted video to frames at 10fps")
+        print("Finished! Converted video to frames at 10fps")
 
 if __name__ == '__main__':
     num_folder = 4
