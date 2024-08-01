@@ -1,5 +1,6 @@
-# https://www.youtube.com/watch?v=m9o87cU8A_s&t=1195s
-# https://www.youtube.com/watch?v=jl6EBf_48xM
-# https://www.youtube.com/watch?v=bpUKOAPE0A0&t=66s
-# https://www.youtube.com/watch?v=AHFmjyONRGY&t=40s
-https://www.youtube.com/watch?v=-qPcaXpu2sk&t=649s
+# https://www.youtube.com/watch?v=m9o87cU8A_s&t=1195s (Sunny, Dry, Brightness, Normal)
+# https://www.youtube.com/watch?v=jl6EBf_48xM (Sunny, Wet, Brightness, Normal)
+# https://www.youtube.com/watch?v=bpUKOAPE0A0&t=66s (Sunny, Dry, Brightness, Normal)
+# https://www.youtube.com/watch?v=AHFmjyONRGY&t=40s (Cloud, Wet, Brightness, Normal)
+# https://www.youtube.com/watch?v=-qPcaXpu2sk&t=649s (Snow, Snow, dark, Snow removal)
+# https://www.youtube.com/watch?v=JTjSBtDra88 (Cloud, Snow, Brightness, Normal)
