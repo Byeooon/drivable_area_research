@@ -11,24 +11,36 @@ import sys
 import matplotlib.pyplot as plt
 import cv2
 
+IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
+IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
+
 def make_rgb_transform(smaller_edge_size: tuple) -> transforms.Compose:
-    IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
-    IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
     interpolation_mode = transforms.InterpolationMode.BICUBIC
     return transforms.Compose([
         transforms.ToTensor(),
         transforms.Resize(size=smaller_edge_size, interpolation=interpolation_mode, antialias=True),
         transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
     ])
+
+def undo_transform(tensor):
+    # Unnormalize
+    mean = torch.tensor(IMAGENET_DEFAULT_MEAN).view(3, 1, 1)
+    std = torch.tensor(IMAGENET_DEFAULT_STD).view(3, 1, 1)
+    tensor = tensor * std + mean
     
+    # Resize back to original size
+    transform = transforms.Compose([
+        # transforms.Resize(original_size, interpolation=transforms.InterpolationMode.BICUBIC, antialias=True),
+        transforms.ToPILImage()
+    ])
+    
+    return transform(tensor)
+
 def make_depth_transform(smaller_edge_size: tuple) -> transforms.Compose:
-    # IMAGENET_DEFAULT_MEAN = (0.485, 0.456, 0.406)
-    # IMAGENET_DEFAULT_STD = (0.229, 0.224, 0.225)
     interpolation_mode = transforms.InterpolationMode.NEAREST
     return transforms.Compose([
         transforms.ToTensor(),
         transforms.Resize(size=smaller_edge_size, interpolation=interpolation_mode, antialias=True),
-        # transforms.Normalize(mean=IMAGENET_DEFAULT_MEAN, std=IMAGENET_DEFAULT_STD),
     ])
 
 def bin_to_numpy(bin_path):
@@ -90,7 +102,7 @@ class DrivableAreaDataset(Dataset):
             image = self.rgb_transform(image)
         if not isinstance(image, torch.Tensor):
             image = transforms.ToTensor()(image)
-            
+        
         depth = None
         lidar_tensor = None
         if self.depth:

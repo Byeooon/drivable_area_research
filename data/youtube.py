@@ -52,6 +52,6 @@ if __name__ == '__main__':
     
     format = 'mp4'
     res = '720p'
-    codec = 'avc1.640020' # 'avc1.4d4020'
+    codec = 'avc1.4d4020' # 'avc1.640020' # 'avc1.4d4020'
     
     main()

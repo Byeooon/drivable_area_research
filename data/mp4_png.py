@@ -15,7 +15,7 @@ def main():
     
     makedirs(save_path)
     
-    for video_name in video_names:
+    for video_name in tqdm(video_names):
         vidcap = cv2.VideoCapture(video_name)
         total_frames = int(vidcap.get(cv2.CAP_PROP_FRAME_COUNT))
         success, image = vidcap.read()
@@ -35,7 +35,7 @@ def main():
         print("Finished! Converted video to frames at 10fps")
 
 if __name__ == '__main__':
-    num_folder = 4
+    num_folder = 5
     video_fps = 60
     
     base_path = f'/home/julio981007/HDD/gurka/{num_folder}'

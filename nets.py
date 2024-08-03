@@ -51,7 +51,40 @@ class DepthEncoder(nn.Module):
         output = x
         
         return output
+
+class LinearClassifier(nn.Module):
+    def __init__(self, in_channels, tokenW=32, tokenH=32, num_labels=1):
+        super(LinearClassifier, self).__init__()
+
+        self.in_channels = in_channels
+        self.width = tokenW
+        self.height = tokenH
+        self.classifier = torch.nn.Conv2d(in_channels, num_labels, (1,1))
+        self.sigmoid = nn.Sigmoid()
+
+    def forward(self, embeddings):
+        embeddings = embeddings.reshape(-1, self.height, self.width, self.in_channels)
+        embeddings = embeddings.permute(0,3,1,2)
+
+        output = self.classifier(embeddings)
+        output = self.sigmoid(output)
+        return output
     
+class SegHead(nn.Module):
+    def __init__(self, in_channels, output_channels, num_patch, img_shape):
+        super().__init__()
+
+        self.img_shape = img_shape
+        self.classifier = LinearClassifier(in_channels, num_patch, num_patch, output_channels)
+
+    def forward(self, x):
+        # convert to logits and upsample to the size of the pixel values
+        logits = self.classifier(x)
+        logits = F.interpolate(logits, size=self.img_shape, mode="bilinear", align_corners=False)
+        
+        return logits
+
+'''
 class SegHead(nn.Module):
     def __init__(self, in_channels, output_channels, num_patch):
         super().__init__()
@@ -84,7 +117,7 @@ class SegHead(nn.Module):
         output = self.sigmoid(x)
         
         return output
-        
+'''
 class DrivableNet(nn.Module):
     def __init__(self, depth, num_patch, device):
         super().__init__()
@@ -98,7 +131,7 @@ class DrivableNet(nn.Module):
         
         num_channels = 1792 if self.depth else 1536
         
-        self.seg_head = SegHead(in_channels=num_channels, output_channels=1, num_patch=num_patch).to(device=device)
+        self.seg_head = SegHead(in_channels=num_channels, output_channels=1, num_patch=num_patch, img_shape=(num_patch*14, num_patch*14)).to(device=device)
         
         self.flatten = nn.Flatten(start_dim=2, end_dim=-1)
         
@@ -116,5 +149,8 @@ class DrivableNet(nn.Module):
         concat = concat.view(img.shape[0], -1, self.num_patch, self.num_patch)
         
         out = self.seg_head(concat)
+        
+        if img.shape[-2:]!=out.shape[-2:]:
+            raise Exception('Input and Output shapes do not match.')
         
         return out

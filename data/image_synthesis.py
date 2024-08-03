@@ -9,21 +9,21 @@ from natsort import natsorted
 def makedirs(path):
     if not os.path.exists(path):
         os.makedirs(path)
-    # else:
-    #     raise Exception('Already folder exists')
+    else:
+        raise Exception('Already folder exists')
 
-base_path = '/media/imlab/HDD/orfd'
-folders = ['training']
+base_path = '/home/julio981007/HDD/gurka'
+folders = ['1', '2', '3']
 
-video_name = "video.mp4"
+video_name = "rgb.mp4"
 alpha = 0.6
 fps = 10
 
-for folder in folders:
+for folder in tqdm(folders):
     img_path = os.path.join(base_path, f'{folder}/image_data')
     label_path = os.path.join(base_path, f'{folder}/pseudo_labeling')
 
-    save_path = os.path.join(base_path, f'{folder}/png_to_video')
+    save_path = os.path.join(base_path, f'{folder}/demo_video')
     makedirs(save_path)
 
     img_list = natsorted([file for file in os.listdir(img_path) if file.endswith('.png')])

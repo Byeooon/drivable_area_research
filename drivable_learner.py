@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 import matplotlib.pyplot as plt
 
-from data_load import get_train_dataloaders
+from data_load import get_train_dataloaders, undo_transform
 from visualize import visualize_data
 from nets import DrivableNet
 from loss import SegmantationLoss
@@ -40,8 +40,8 @@ class DrivableLearner():
         
         best_vloss = 1000000.
         patience_cnt=0
-        
-        for epoch in tqdm(range(1, self.args.num_epochs+1)):
+        step = 0
+        for epoch in tqdm(range(self.args.num_epochs)):
             train_running_loss = 0.0
             for i, (img, depth, pcd, gt) in enumerate(tqdm(train_loader)):
                 img = img.to(self.device)
@@ -60,11 +60,14 @@ class DrivableLearner():
                 
                 train_running_loss += loss_segmentation.item()
                 
-                if i%self.args.summary_freq == 0:
-                    self.writer.add_scalar("Step Loss/train", loss_segmentation.item(), i+1)
+                if step % self.args.summary_freq == 0:
+                    self.writer.add_scalar("Step Loss/train", loss_segmentation.item(), step)
                     # for batch in range(self.args.batch_size):
-                    self.writer.add_image(f'Image/input', img[0], i+1)
-                    self.writer.add_image(f'Image/output', output[0], i+1)
+                    self.writer.add_image(f'Image/input', undo_transform(img[0]), step)
+                    self.writer.add_image(f'Image/output', output[0], step)
+                    self.writer.add_image(f'Image/GT', gt[0], step)
+                
+                step+=1
             # scheduler.step()
             
             with torch.no_grad():

@@ -17,7 +17,7 @@ def makedirs(path):
         raise Exception('Already folder exists')
 
 def main():
-    for folder in folders:
+    for folder in tqdm(folders):
         save_path = os.path.join(base_path, f'{folder}/{save_folder_name}')
         makedirs(save_path)
         
@@ -50,7 +50,7 @@ if __name__=='__main__':
         }
     
     base_path = '/home/julio981007/HDD/gurka'
-    folders = ['0']
+    folders = ['1', '2', '3', '4', '5']
     save_folder_name = 'dense_depth'
     
     encoder = 'vitl' # or 'vits', 'vitb', 'vitg'

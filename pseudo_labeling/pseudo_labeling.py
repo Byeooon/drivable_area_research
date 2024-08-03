@@ -23,51 +23,6 @@ def makedirs(path):
     else:
         raise Exception('Already folder exists')
 
-def roi(model_input, box_size, dataset):
-    visualize = torch.permute(model_input[0], (1,2,0)).detach().cpu().numpy()
-    tmp_img = visualize.copy()
-    
-    if dataset=='orfd':
-        width_offset = 16
-
-        flatten_indices = []
-        for i in range(box_size):
-            for j in range(box_size):
-                left = j * grid_size
-                upper = i * grid_size
-                right = left + grid_size
-                lower = upper + grid_size
-                if (box_size-6<=i<=box_size-1)&(box_size-width_offset-1>=j>=width_offset):
-                    flatten_indices.append(i*box_size+j)
-                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
-    
-    elif dataset=='gurka':
-        top_width_offset = 2
-        left_side_width_offset = 13 # 10
-        right_side_width_offset = 10 # 12
-
-        flatten_indices = []
-        for i in range(box_size):
-            for j in range(box_size):
-                left = j * grid_size
-                upper = i * grid_size
-                right = left + grid_size
-                lower = upper + grid_size
-                if (box_size-22<=i<=box_size-21)&(box_size//2-top_width_offset<=j<=box_size//2+top_width_offset): # 24, 23
-                    flatten_indices.append(i*box_size+j)
-                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
-                if (box_size-6<=i<=box_size-2)&(box_size//2-left_side_width_offset-1<=j<=box_size//2-left_side_width_offset): # 8, 4
-                    flatten_indices.append(i*box_size+j)
-                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
-                if (box_size-6<=i<=box_size-2)&(box_size//2+right_side_width_offset<=j<=box_size//2+right_side_width_offset+1): # 8, 4
-                    flatten_indices.append(i*box_size+j)
-                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
-        # plt.imshow(tmp_img)
-        # plt.show()
-        # sys.exit()
-    
-    return flatten_indices
-
 def find_drivable_indices(box_size, tmp_map):
     flatten_indices = []
     for i in range(box_size):
@@ -157,11 +112,56 @@ def fine_drivable(img, depth, model_output, flatten_indices, height, width, outp
     
     return crf_drivable_map
 
+def roi(model_input, box_size, dataset):
+    visualize = torch.permute(model_input[0], (1,2,0)).detach().cpu().numpy()
+    tmp_img = visualize.copy()
+    
+    if dataset=='orfd':
+        width_offset = 16
+
+        flatten_indices = []
+        for i in range(box_size):
+            for j in range(box_size):
+                left = j * grid_size
+                upper = i * grid_size
+                right = left + grid_size
+                lower = upper + grid_size
+                if (box_size-6<=i<=box_size-1)&(box_size-width_offset-1>=j>=width_offset):
+                    flatten_indices.append(i*box_size+j)
+                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
+    
+    elif dataset=='gurka':
+        top_width_offset = 2
+        left_side_width_offset = 9 # Tire : 10 # Non-Tire : 13 # Snow : 
+        right_side_width_offset = 10 # Tire : 12 # Non-Tire : 10 # Snow : 
+
+        flatten_indices = []
+        for i in range(box_size):
+            for j in range(box_size):
+                left = j * grid_size
+                upper = i * grid_size
+                right = left + grid_size
+                lower = upper + grid_size
+                if (box_size-31<=i<=box_size-30)&(box_size//2-top_width_offset<=j<=box_size//2+top_width_offset): # Tire : 24, 23 # Non-Tire : 22, 21 # Snow : 27, 26
+                    flatten_indices.append(i*box_size+j)
+                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
+                if (box_size-10<=i<=box_size-8)&(box_size//2-left_side_width_offset-1<=j<=box_size//2-left_side_width_offset): # Tire : 8, 4 # Non-Tire : 6, 2 # Snow : 
+                    flatten_indices.append(i*box_size+j)
+                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
+                if (box_size-10<=i<=box_size-8)&(box_size//2+right_side_width_offset<=j<=box_size//2+right_side_width_offset+1): # Tire : 8, 4 # Non-Tire : 6, 2 # Snow : 
+                    flatten_indices.append(i*box_size+j)
+                    tmp_img[upper:lower, left:right] = np.array((255, 0, 0))
+        # plt.imshow(tmp_img)
+        # plt.show()
+        # sys.exit()
+    
+    return flatten_indices
+
 def main():
     processor = AutoImageProcessor.from_pretrained('facebook/dinov2-giant', crop_size={'height':img_size, 'width':img_size}, size={'height':img_size, 'width':img_size})
     
     conf_mat = np.zeros((num_labels, num_labels), dtype=np.float64)
-    for folder in folders:
+    for folder in tqdm(folders):
         img_path = os.path.join(base_path, f'{folder}/image_data')
         depth_path = os.path.join(base_path, f'{folder}/dense_depth')
         gt_path = os.path.join(base_path, f'{folder}/gt_image')
@@ -173,7 +173,7 @@ def main():
         img_list = [file for file in os.listdir(img_path) if file.endswith('.png')]
         with torch.no_grad():
             for i in tqdm(img_list):
-                # if i!='000450.png':
+                # if i!='005495.png':
                 #     continue
                 img_name = i
                 img = Image.open(os.path.join(img_path, f'{img_name}')).convert('RGB')
@@ -242,7 +242,7 @@ if __name__ == "__main__":
     dataset = 'gurka' # orfd
     base_path = f'/home/julio981007/HDD/{dataset}'
     folders = ['training', 'testing', 'validation']
-    folders = ['3']
+    folders = ['5']
     # folders = ['training', 'validation']
     
     save_folder_name = 'pseudo_labeling'# 'pseudo_labeling_raw_depth'
