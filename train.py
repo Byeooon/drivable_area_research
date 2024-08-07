@@ -17,7 +17,7 @@ def str2bool(v):
 
 parser = argparse.ArgumentParser()
 parser.add_argument("--dataset_dir", type=str, required=False, default='/home/julio981007/HDD/orfd')
-parser.add_argument("--ckpt_dir", type=str, default="./checkpoints/gurka_PL_nodepth")
+parser.add_argument("--ckpt_dir", type=str, default="./checkpoints/orfd_PL_nodepth")
 parser.add_argument("--patience", type=int, default=5)
 parser.add_argument("--learning_rate", type=float, default=1e-4, help='Learning rate of for adam')
 parser.add_argument("--batch_size", type=int, default=4)

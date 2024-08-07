@@ -49,9 +49,9 @@ if __name__=='__main__':
             'vitg': {'encoder': 'vitg', 'features': 384, 'out_channels': [1536, 1536, 1536, 1536]}
         }
     
-    base_path = '/home/julio981007/HDD/gurka'
-    folders = ['1', '2', '3', '4', '5']
-    save_folder_name = 'dense_depth'
+    base_path = '/home/julio981007/HDD/orfd'
+    folders = ['training', 'testing', 'validation'] # ['1', '2', '3', '4', '5']
+    save_folder_name = 'dense_depth_anything'
     
     encoder = 'vitl' # or 'vits', 'vitb', 'vitg'
     dataset = 'vkitti' # 'hypersim' for indoor model, 'vkitti' for outdoor model

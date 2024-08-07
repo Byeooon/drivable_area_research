@@ -64,11 +64,11 @@ def main():
     print ('glob acc : {0:.3f}, pre : {1:.3f}, recall : {2:.3f}, F_score : {3:.3f}, IoU : {4:.3f}'.format(globalacc, pre, recall, F_score, iou))
     
 if __name__ == "__main__":
-    base_path = '/media/imlab/HDD/ORFD'
+    base_path = '/home/julio981007/HDD/orfd'
     folders = ['training', 'testing', 'validation']
     folders = ['testing']
     num_labels=2
     
-    save_folder_name = 'tmp'# 'pseudo_labeling_raw_depth'
+    save_folder_name = 'pseudo_labeling'# 'pseudo_labeling_raw_depth'
     
     main()

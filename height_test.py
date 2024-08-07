@@ -39,7 +39,7 @@ def visualize_heightmap(heightmap_data):
     plt.gca().invert_yaxis()  # y축을 뒤집어 원점을 좌상단으로
     plt.show()
 
-def load_depth_map(file_path, depth_scale=1000.0):
+def load_depth_map(file_path):
     depth_map = cv2.imread(file_path, cv2.IMREAD_GRAYSCALE)
     return depth_map.astype(np.float32)
 
@@ -151,8 +151,7 @@ def main():
     original_shape = original_image.shape[:2]
     
     depth_map_path = os.path.join(base_path, 'dense_depth', img_name + '.png')
-    depth_scale = 1000.0
-    depth_map = load_depth_map(depth_map_path, depth_scale)
+    depth_map = load_depth_map(depth_map_path)
     
     # Visualize depth map
     visualize_depth_map(depth_map)
@@ -175,7 +174,7 @@ def main():
     points_df['x_normalized'] = (points_df['x']/heightmap_resolution).astype(float)
     points_df['y_normalized'] = (points_df['y']/heightmap_resolution).astype(float)
     tmp = points_df.groupby(['x_normalized','y_normalized'])['z'].max()
-    # visualize_heightmap(tmp)
+    visualize_heightmap(tmp)
     points_df['height'] = tmp.values
     indices = np.array(tmp.index.tolist())
     #################################################################################

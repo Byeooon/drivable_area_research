@@ -232,19 +232,18 @@ if __name__ == "__main__":
     dinov2_vitg14 = torch.hub.load('facebookresearch/dinov2', 'dinov2_vitg14')
     dinov2_vitg14.eval().to(device)
     
-    img_size = 644 # 644
-    threshold = 0.6 # 0.5
+    img_size = 644
+    threshold = 0.5 # orfd : 0.5 / gurka : 0.6
     grid_size = 14
     box_size = img_size // grid_size  # num of grid per row and column
     num_labels = 2 # Drivable / Non-drivable
     num_iter = 2
     
-    dataset = 'gurka' # orfd
+    dataset = 'orfd' # orfd, gurka
     base_path = f'/home/julio981007/HDD/{dataset}'
-    folders = ['training', 'testing', 'validation']
     folders = ['5']
-    # folders = ['training', 'validation']
+    folders = ['training', 'testing', 'validation']
     
-    save_folder_name = 'pseudo_labeling'# 'pseudo_labeling_raw_depth'
+    save_folder_name = 'pseudo_labeling'# pseudo_labeling / pseudo_labeling_raw_depth
     
     main()
