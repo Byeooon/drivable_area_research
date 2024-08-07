@@ -165,6 +165,7 @@ def main():
         img_path = os.path.join(base_path, f'{folder}/image_data')
         depth_path = os.path.join(base_path, f'{folder}/dense_depth')
         gt_path = os.path.join(base_path, f'{folder}/gt_image')
+        height_path = os.path.join(base_path, f'{folder}/height')
         
         save_path = os.path.join(base_path, f'{folder}/{save_folder_name}')
         print('\nsave path :', save_path)
@@ -185,7 +186,19 @@ def main():
                 # depth_np = np.array(depth)
                 # depth_np = depth_np # (depth_np - np.min(depth_np)) / (np.max(depth_np) - np.min(depth_np))
                 # depth_np = np.expand_dims(depth_np, axis=0)
-                depth_np = None
+                # depth_np = None
+
+                height_name = img_name.split('.')[0] + '.tiff'
+                print(height_name)
+                height = cv2.imread(os.path.join(height_path, f'{height_name}'), cv2.IMREAD_UNCHANGED)
+                print(height)
+                plt.imshow(height)
+                plt.colorbar()
+                plt.show()
+                sys.exit()
+                height = cv2.resize(height, (box_size, box_size), interpolation=cv2.INTER_NEAREST)
+                height_np = np.array(height)
+                height_np = np.expand_dims(height_np, axis=0)
                 
                 inputs = processor(images=img_np, return_tensors="pt", do_normalize=False)
                 output_size = int(inputs.pixel_values[0].shape[1]/grid_size)
@@ -240,10 +253,10 @@ if __name__ == "__main__":
     num_iter = 2
     
     dataset = 'orfd' # orfd, gurka
-    base_path = f'/home/julio981007/HDD/{dataset}'
+    base_path = f'/home/byeooon/HDD/{dataset}'
     folders = ['5']
     folders = ['training', 'testing', 'validation']
     
-    save_folder_name = 'pseudo_labeling'# pseudo_labeling / pseudo_labeling_raw_depth
+    save_folder_name = 'pseudo_labeling_height'# pseudo_labeling / pseudo_labeling_raw_depth
     
     main()
