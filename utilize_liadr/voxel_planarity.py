@@ -51,4 +51,12 @@ class VoxelPlanarityCalculator:
         pcd.points = o3d.utility.Vector3dVector(self.point_cloud)
         pcd.colors = o3d.utility.Vector3dVector(np.array(colors))
 
+        # save
         o3d.visualization.draw_geometries([pcd])
+
+        # 저장
+        pcd_np = np.asarray(pcd.points)
+        colors_np = np.asarray(colors)
+        
+        np.save('data/pcd_points.npy', pcd_np)
+        np.save('data/pcd_colors.npy', colors_np)

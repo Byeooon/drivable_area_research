@@ -23,7 +23,7 @@ class Depth2Voxel:
         
         # If the depth map is stored in 16-bit format, convert it to meters
         if depth_map.dtype == np.uint16:
-            depth_map = depth_map.astype(np.float32) / 1000.0  # Assuming the depth map is in millimeters
+            depth_map = depth_map.astype(np.float32)
         return depth_map
 
     def depth_to_point_cloud(self, depth_map):
