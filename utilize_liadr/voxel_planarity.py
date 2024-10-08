@@ -2,10 +2,9 @@ import open3d as o3d
 import numpy as np
 
 class VoxelPlanarityCalculator:
-    def __init__(self, voxel_grid, point_cloud, voxel_size, planarity_threshold=0.8):
+    def __init__(self, voxel_grid, point_cloud, planarity_threshold):
         self.voxel_grid = voxel_grid
         self.point_cloud = np.asarray(point_cloud.points) if not isinstance(point_cloud, np.ndarray) else point_cloud
-        self.voxel_size = voxel_size
         self.planarity_threshold = planarity_threshold
         self.planarity_dict = {}
 
@@ -29,7 +28,7 @@ class VoxelPlanarityCalculator:
                 eigenvalues, _ = np.linalg.eigh(cov_matrix)
                 eigenvalues = np.sort(eigenvalues)[::-1]
 
-                planarity = ((eigenvalues[1] - eigenvalues[2]) * 2) / eigenvalues[0] if eigenvalues[0] > 0 else 0
+                planarity = min(((eigenvalues[1] - eigenvalues[2]) * 2) / eigenvalues[0], 1.0) if eigenvalues[0] > 0 else 0
             else:
                 planarity = 0
 

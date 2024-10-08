@@ -11,12 +11,9 @@ if __name__ == "__main__":
     converter = Depth2Voxel(calibration_file)
     depth_map = converter.load_depth_map(depth_map_file)
     points_3D = converter.depth_to_point_cloud(depth_map)
-    voxel_grid = converter.convert_to_voxel_grid(points_3D, voxel_size=0.05)
+    voxel_grid = converter.convert_to_voxel_grid(points_3D, voxel_size=0.25)
 
-    calculator = VoxelPlanarityCalculator(voxel_grid, points_3D, voxel_size=0.1)
+    calculator = VoxelPlanarityCalculator(voxel_grid, points_3D, planarity_threshold=0.7)
     planarity_dict = calculator.calculate_planarity()
-
-    for voxel_index, planarity in planarity_dict.items():
-        print(f"Voxel {voxel_index}: Planarity = {planarity}")
 
     calculator.visualize_planarity()
